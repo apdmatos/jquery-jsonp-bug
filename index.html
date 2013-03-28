@@ -1,0 +1,57 @@
+<html>
+<head>
+	<title>jsonp bug test</title>
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript">
+
+		$(document).ready(function() {
+
+			var demobox = $('#images');
+			var jqXHR = 
+				$.getJSON("http://api.flickr.com/services/feeds/photos_public.gne?jsoncallback=?", {
+				    tags: "jquery",
+				    tagmode: "any",
+				    format: "json"
+				}, function (data) {
+				    demobox.empty();
+				    $.each(data.items, function (i, item) {
+				        demobox.append('<a href="' + item.link + '" target="_blank"><img style="max-width:150px;" src="' + item.media.m + '" alt="' + item.title + '" title="' + item.title + '">');
+				        if (i == 10) return false;
+				    });
+				});
+
+
+			// The problem will appear with this abort line!
+			// Check the console, for the error
+			jqXHR.abort();
+
+		});
+
+	</script>
+</head>
+<body>
+	<h1>JsonP JQuery test</h1>
+	<div id="images"></div>
+	<p>
+		This bug appears on all jquery versions, including the lastest stable version and the developing version when a jsonp request is done.
+	</p>
+	<p>
+		Before jsonp request completes, for some reason you need to cancel the request using <code>jqXHR.abort()</code>. The abort function will remove the script tag from the page (used to perform the request), and remove the javascript temporary function (jQuery19107910770212765783_1364346482029), that handles the request.
+	</p>
+	<p>
+		What happens next is a javascript error, because when the request is issued by the browser, even if you remove the script tag from the page, when the server responds the javascript will be executed and the function is no longer available, because it has been removed by the abort call.
+	</p>
+	<p>
+		This page reproduces the error using the latest jquery stable version (1.9.1). To see the error occurring, host this page on a web server (iis, apache or a node process) and open your javascript console.
+	</p>
+	<p>
+		Alternatively you can check this page on jsFiddle: http://jsfiddle.net/XvW4B/
+	</p>
+	<p>
+		I submitted a patch to jquery, solving this problem, but if you cannot wait for the resolution, check the jquery-fixed.js script.
+	</p>
+	<p>
+		Hope it helped!
+	</p>
+</body>
+</html>
